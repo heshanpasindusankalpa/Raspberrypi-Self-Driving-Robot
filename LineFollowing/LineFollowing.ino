@@ -3,7 +3,7 @@
 #define IN1 5
 #define IN2 6
 #define IN3 9
-#define IN4 10
+#define IN4 3
 
 void setup() {
     Serial.begin(9600);
@@ -32,10 +32,13 @@ void loop() {
 
     if (command == 'L') {
         moveLeft();
+        Serial.print("L");
     } else if (command == 'R') {
         moveRight();
+         Serial.print("R");
     } else if (command == 'F') {
         moveForward();
+         Serial.print("F");
     } else {
         stopMotors();
     }
