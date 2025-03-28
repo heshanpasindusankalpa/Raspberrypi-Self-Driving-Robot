@@ -1,10 +1,13 @@
 #include <SPI.h>
 
 // Define motor control pins
-#define IN1 5
-#define IN2 6
-#define IN3 9
-#define IN4 3
+#define ENA 9
+#define IN2 8
+#define IN1 7
+#define ENB 6
+#define IN4 4
+#define IN3 2
+#define t 80
 
 // SPI communication variable
 volatile byte command = 0;
@@ -48,20 +51,26 @@ void loop() {
             Serial.println("Moving Forward");
             digitalWrite(IN1, HIGH);
             digitalWrite(IN2, LOW);
+            analogWrite(ENA, t); 
             digitalWrite(IN3, HIGH);
             digitalWrite(IN4, LOW);
+            analogWrite(ENB, t); 
         } else if (command == 'L') {
             Serial.println("Turning Left");
             digitalWrite(IN1, LOW);
             digitalWrite(IN2, HIGH);
+            analogWrite(ENA, t); 
             digitalWrite(IN3, HIGH);
             digitalWrite(IN4, LOW);
+            analogWrite(ENB, t); 
         } else if (command == 'R') {
             Serial.println("Turning Right");
             digitalWrite(IN1, HIGH);
             digitalWrite(IN2, LOW);
+            analogWrite(ENA, t); 
             digitalWrite(IN3, LOW);
             digitalWrite(IN4, HIGH);
+            analogWrite(ENB, t); 
         } else {
             Serial.println("Stopping");
             digitalWrite(IN1, LOW);
@@ -70,8 +79,9 @@ void loop() {
             digitalWrite(IN4, LOW);
         }
         
+        // Add delay to allow for smoother motion response
+        delay(2000);  // Adjust delay time to your needs (200 milliseconds here)
+
         newData = false;  // Reset new data flag
     }
 }
-
-
