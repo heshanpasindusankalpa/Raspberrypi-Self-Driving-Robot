@@ -20,7 +20,7 @@ try:
 
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         conv = cv2.filter2D(gray, -1, kernal)
-        _, thres = cv2.threshold(conv, 100, 255, 0)
+        _, thres = cv2.threshold(conv, 80, 255, 0)
 
         # Find contours
         contours, _ = cv2.findContours(thres, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -38,7 +38,9 @@ try:
             cv2.drawContours(image, [largest_contour], -1, (0, 255, 255), 3)
             rect = cv2.minAreaRect(largest_contour)
             box = cv2.boxPoints(rect)
-            box = np.int0(box)
+            #box = np.int0(box)
+            box = box.astype(np.int32)
+
             cv2.drawContours(image, [box], 0, (0, 0, 255), 2)
             cv2.line(image, (frameCx, 0), (frameCx, h), (0, 255, 255), 2)
 
