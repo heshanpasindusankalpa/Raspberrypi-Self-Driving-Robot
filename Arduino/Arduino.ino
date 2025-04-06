@@ -58,18 +58,18 @@ void loop() {
         } else if (command == 'L') {
             Serial.println("Turning Left");
             digitalWrite(IN1, LOW);
-            digitalWrite(IN2, HIGH);
+            digitalWrite(IN2, LOW);
             analogWrite(ENA, t); 
             digitalWrite(IN3, HIGH);
             digitalWrite(IN4, LOW);
             analogWrite(ENB, t); 
         } else if (command == 'R') {
             Serial.println("Turning Right");
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, LOW);
+            digitalWrite(IN1, LOW);
+            digitalWrite(IN2, HIGH);
             analogWrite(ENA, t); 
             digitalWrite(IN3, LOW);
-            digitalWrite(IN4, HIGH);
+            digitalWrite(IN4, LOW);
             analogWrite(ENB, t); 
         } else {
             Serial.println("Stopping");
