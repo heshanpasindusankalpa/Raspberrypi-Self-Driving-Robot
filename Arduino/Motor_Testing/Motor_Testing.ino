@@ -5,7 +5,7 @@
 #define ENB 6
 #define IN4 4
 #define IN3 2
-#define t 80  // PWM speed (0-255)
+#define t 120  // PWM speed (0-255)
 
 void setup() {
     Serial.begin(9600);  // For monitoring in Serial Monitor
@@ -29,8 +29,8 @@ void setup() {
 void loop() {
     // Move Forward
     Serial.println("Moving Forward");
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
     analogWrite(ENA, t);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
