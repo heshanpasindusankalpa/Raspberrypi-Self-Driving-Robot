@@ -7,7 +7,7 @@
 #define ENB 6
 #define IN4 4
 #define IN3 2
-#define t 80
+#define t 110
 
 // SPI communication variable
 volatile byte command = 0;
@@ -49,13 +49,13 @@ void loop() {
         // Control motors based on received command
         if (command == 'F') {
             Serial.println("Moving Forward");
-            digitalWrite(IN1, HIGH);
-            digitalWrite(IN2, LOW);
+            digitalWrite(IN1, LOW);
+            digitalWrite(IN2, HIGH);
             analogWrite(ENA, t); 
             digitalWrite(IN3, HIGH);
             digitalWrite(IN4, LOW);
             analogWrite(ENB, t); 
-        } else if (command == 'L') {
+        } else if (command == 'R') {
             Serial.println("Turning Left");
             digitalWrite(IN1, LOW);
             digitalWrite(IN2, LOW);
@@ -63,7 +63,7 @@ void loop() {
             digitalWrite(IN3, HIGH);
             digitalWrite(IN4, LOW);
             analogWrite(ENB, t); 
-        } else if (command == 'R') {
+        } else if (command == 'L') {
             Serial.println("Turning Right");
             digitalWrite(IN1, LOW);
             digitalWrite(IN2, HIGH);
