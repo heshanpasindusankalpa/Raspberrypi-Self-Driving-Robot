@@ -32,7 +32,7 @@ void setup() {
 
   // Attach servo
   steering.attach(SERVO_PIN);
-  steering.write(90); // Start at center
+  steering.write(95); // Start at center
 
   Serial.println("Bluetooth Car Ready");
 }
@@ -62,11 +62,11 @@ void loop() {
         break;
 
       case 'L': // Turn wheels Left
-        steering.write(45); // Adjust if needed
+        steering.write(55); // Adjust if needed
         break;
 
       case 'R': // Turn wheels Right
-        steering.write(135); // Adjust if needed
+        steering.write(125); // Adjust if needed
         break;
 
       case 'C': // Center steering
