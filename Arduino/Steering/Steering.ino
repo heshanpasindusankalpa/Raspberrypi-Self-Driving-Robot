@@ -5,15 +5,14 @@ char data; // Variable to store received data
 // Motor control pins (PWM capable)
 #define LEFT_MOTOR_FORWARD   7
 #define LEFT_MOTOR_BACKWARD  6
-#define RIGHT_MOTOR_FORWARD  5
-#define RIGHT_MOTOR_BACKWARD 3
+#define RIGHT_MOTOR_FORWARD  12
+#define RIGHT_MOTOR_BACKWARD 8
 
-#define LEFT_MOTOR_PWM   9   // PWM pin for left motor
-#define RIGHT_MOTOR_PWM 10   // PWM pin for right motor
+#define LEFT_MOTOR_PWM   5   // PWM pin for left motor
+#define RIGHT_MOTOR_PWM 3   // PWM pin for right motor
 
 #define SERVO_PIN 11         // Servo pin
-
-const int SPEED = 150;       // Motor speed (0-255)
+const int SPEED = 90;       // Motor speed (0-255)
 
 Servo steering;
 
@@ -30,6 +29,8 @@ void setup() {
   pinMode(LEFT_MOTOR_PWM, OUTPUT);
   pinMode(RIGHT_MOTOR_PWM, OUTPUT);
 
+
+
   // Attach servo
   steering.attach(SERVO_PIN);
   steering.write(95); // Start at center
@@ -44,12 +45,14 @@ void loop() {
 
     switch (data) {
       case 'F': // Move Forward
+    
         digitalWrite(LEFT_MOTOR_FORWARD, HIGH);
         digitalWrite(LEFT_MOTOR_BACKWARD, LOW);
         digitalWrite(RIGHT_MOTOR_FORWARD, HIGH);
         digitalWrite(RIGHT_MOTOR_BACKWARD, LOW);
-        analogWrite(LEFT_MOTOR_PWM, SPEED);
+        analogWrite(LEFT_MOTOR_PWM, SPEED);  // Always write PWM first
         analogWrite(RIGHT_MOTOR_PWM, SPEED);
+
         break;
 
       case 'B': // Move Backward
