@@ -5,10 +5,6 @@
 
 Servo steering;
 
-String command = "";
-char startChar;
-int value;
-
 #define LEFT_MOTOR_FORWARD   7
 #define LEFT_MOTOR_BACKWARD  6
 #define RIGHT_MOTOR_FORWARD  12
@@ -17,18 +13,19 @@ int value;
 #define LEFT_MOTOR_PWM   5
 #define RIGHT_MOTOR_PWM  3
 #define SERVO_PIN 11
-const int SPEED = 90;
+const int DEFAULT_SPEED = 90; // Default speed when using G commands
 
-#define BT Serial1  // Bluetooth on Mega
-
-// OLED config
+// OLED configuration
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+String command = ""; // Buffer for incoming commands
+bool commandComplete = false;
+
 void setup() {
-  BT.begin(9600);       // Bluetooth module
+  Serial.begin(9600); // Bluetooth communication
 
   pinMode(LEFT_MOTOR_FORWARD, OUTPUT);
   pinMode(LEFT_MOTOR_BACKWARD, OUTPUT);
@@ -38,71 +35,93 @@ void setup() {
   pinMode(RIGHT_MOTOR_PWM, OUTPUT);
 
   steering.attach(SERVO_PIN);
-  steering.write(90); // Center
+  steering.write(90); // Center steering
 
   // Initialize OLED
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    // You can blink an LED here or halt
-    while (true); // Stop if OLED not found
+    while (true); // Halt if OLED fails
   }
   display.clearDisplay();
-  display.setTextSize(2);
+  display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
-  display.println("Car Ready");
+  display.println("BT Car Ready");
   display.display();
   delay(1000);
 }
 
 void loop() {
-  if (BT.available()) {
-    char c = BT.read();
+  readSerialCommand();
+  
+  if (commandComplete) {
+    processCommand(command);
+    displayCommand(command);
+    command = "";
+    commandComplete = false;
+  }
+}
+
+void readSerialCommand() {
+  while (Serial.available()) {
+    char c = Serial.read();
     if (c == '\n' || c == '\r') {
-      processCommand(command);
-      displayCommand(command);
-      command = "";
+      commandComplete = true;
+      return;
     } else {
       command += c;
+    }
+    // Prevent buffer overflow
+    if (command.length() > 32) {
+      command = "";
+      commandComplete = false;
     }
   }
 }
 
 void displayCommand(String cmd) {
   display.clearDisplay();
+  display.setTextSize(1);
   display.setCursor(0, 0);
+  display.print("CMD: ");
   display.setTextSize(2);
-  display.println("Cmd:");
-  display.setTextSize(2);
-  display.setCursor(0, 25);
+  display.setCursor(0, 20);
   display.println(cmd);
   display.display();
 }
 
 void processCommand(String cmd) {
-  if (cmd.length() < 3) return;
+  if (cmd.length() < 1) return;
 
-  startChar = cmd.charAt(0);
-  value = cmd.substring(1).toInt();
+  char commandType = cmd.charAt(0);
+  int value = cmd.substring(1).toInt();
 
-  switch (startChar) {
-    case 'T': {
-      value = constrain(value, 0, 99);
-      int angle = map(value, 0, 99, 45, 135);
-      steering.write(angle);
+  switch (commandType) {
+    case 'T': // Steering
+      value = constrain(value, 0, 180);
+      steering.write(value);
       break;
-    }
-    case 'S': {
-      value = constrain(value, 0, 99);
-      int speedPWM = map(value, 0, 99, 0, 255);
-      moveForward(speedPWM);
+
+    case 'S': // Speed control
+      value = constrain(value, 0, 255);
+      analogWrite(LEFT_MOTOR_PWM, value);
+      analogWrite(RIGHT_MOTOR_PWM, value);
       break;
-    }
-    case 'G': {
-      if (value == 0) stop();
-      else if (value == 3) moveForward(SPEED);
-      else if (value == 1) moveBackward(SPEED);
+
+    case 'G': // Movement commands
+      switch (value) {
+        case 0: // Stop
+          stop();
+          break;
+        case 1: // Forward
+          moveForward(DEFAULT_SPEED);
+          break;
+        case 2: // Backward
+          moveBackward(DEFAULT_SPEED);
+          break;
+      }
       break;
-    }
+
+    // Add more commands as needed
   }
 }
 
