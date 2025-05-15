@@ -1,12 +1,14 @@
 #include <Servo.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
 
 Servo steering;
 
-String command = "";  // To store full command like "T35" or "S90"
-char startChar;       // First character in command
-int value;            // Number part like 35
+String command = "";
+char startChar;
+int value;
 
-// Motor pins
 #define LEFT_MOTOR_FORWARD   7
 #define LEFT_MOTOR_BACKWARD  6
 #define RIGHT_MOTOR_FORWARD  12
@@ -14,15 +16,19 @@ int value;            // Number part like 35
 
 #define LEFT_MOTOR_PWM   5
 #define RIGHT_MOTOR_PWM  3
-
 #define SERVO_PIN 11
 const int SPEED = 90;
 
-#define BT Serial1  // For Arduino Mega (use Serial1)
+#define BT Serial1  // Bluetooth on Mega
+
+// OLED config
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 void setup() {
-  Serial.begin(9600);   // Serial Monitor
-  BT.begin(9600);       // Bluetooth module on Serial1
+  BT.begin(9600);       // Bluetooth module
 
   pinMode(LEFT_MOTOR_FORWARD, OUTPUT);
   pinMode(LEFT_MOTOR_BACKWARD, OUTPUT);
@@ -34,15 +40,26 @@ void setup() {
   steering.attach(SERVO_PIN);
   steering.write(90); // Center
 
-  Serial.println("Bluetooth Car Ready (Mega)");
+  // Initialize OLED
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    // You can blink an LED here or halt
+    while (true); // Stop if OLED not found
+  }
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(0, 0);
+  display.println("Car Ready");
+  display.display();
+  delay(1000);
 }
 
 void loop() {
   if (BT.available()) {
     char c = BT.read();
-    Serial.print(c);
     if (c == '\n' || c == '\r') {
       processCommand(command);
+      displayCommand(command);
       command = "";
     } else {
       command += c;
@@ -50,32 +67,42 @@ void loop() {
   }
 }
 
+void displayCommand(String cmd) {
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.setTextSize(2);
+  display.println("Cmd:");
+  display.setTextSize(2);
+  display.setCursor(0, 25);
+  display.println(cmd);
+  display.display();
+}
+
 void processCommand(String cmd) {
   if (cmd.length() < 3) return;
 
   startChar = cmd.charAt(0);
-  value = cmd.substring(1).toInt(); // Convert "35" to 35
+  value = cmd.substring(1).toInt();
 
   switch (startChar) {
-    case 'T':  // Steering
-      value = constrain(value, 0, 99);  // Optional safety
-      int angle = map(value, 0, 99, 45, 135);  // Adjust as needed
+    case 'T': {
+      value = constrain(value, 0, 99);
+      int angle = map(value, 0, 99, 45, 135);
       steering.write(angle);
-      Serial.print("Steering angle: ");
-      Serial.println(angle);
       break;
-
-    case 'S':  // Throttle
+    }
+    case 'S': {
       value = constrain(value, 0, 99);
       int speedPWM = map(value, 0, 99, 0, 255);
       moveForward(speedPWM);
       break;
-
-    case 'G':  // Gear
+    }
+    case 'G': {
       if (value == 0) stop();
       else if (value == 3) moveForward(SPEED);
       else if (value == 1) moveBackward(SPEED);
       break;
+    }
   }
 }
 
