@@ -3,17 +3,22 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
+// Servo for steering
 Servo steering;
 
+// Motor control pins
 #define LEFT_MOTOR_FORWARD   7
 #define LEFT_MOTOR_BACKWARD  6
 #define RIGHT_MOTOR_FORWARD  12
 #define RIGHT_MOTOR_BACKWARD 8
-
 #define LEFT_MOTOR_PWM   5
 #define RIGHT_MOTOR_PWM  3
+
+// Servo pin
 #define SERVO_PIN 11
-const int DEFAULT_SPEED = 90; // Default speed when using G commands
+
+// Default speed for G1 and G2 commands
+const int DEFAULT_SPEED = 90;
 
 // OLED configuration
 #define SCREEN_WIDTH 128
@@ -21,12 +26,14 @@ const int DEFAULT_SPEED = 90; // Default speed when using G commands
 #define OLED_RESET -1
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-String command = ""; // Buffer for incoming commands
+// Serial command buffer
+String command = "";
 bool commandComplete = false;
 
 void setup() {
-  Serial.begin(9600); // Bluetooth communication
+  Serial.begin(9600); // Initialize Bluetooth serial communication
 
+  // Set motor pins as outputs
   pinMode(LEFT_MOTOR_FORWARD, OUTPUT);
   pinMode(LEFT_MOTOR_BACKWARD, OUTPUT);
   pinMode(RIGHT_MOTOR_FORWARD, OUTPUT);
@@ -34,10 +41,11 @@ void setup() {
   pinMode(LEFT_MOTOR_PWM, OUTPUT);
   pinMode(RIGHT_MOTOR_PWM, OUTPUT);
 
+  // Attach and center steering servo
   steering.attach(SERVO_PIN);
-  steering.write(90); // Center steering
+  steering.write(90);
 
-  // Initialize OLED
+  // Initialize OLED display
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
     while (true); // Halt if OLED fails
   }
@@ -52,7 +60,7 @@ void setup() {
 
 void loop() {
   readSerialCommand();
-  
+
   if (commandComplete) {
     processCommand(command);
     displayCommand(command);
@@ -62,33 +70,59 @@ void loop() {
 }
 
 void readSerialCommand() {
+  static bool shown = false;
   while (Serial.available()) {
-    char c = Serial.read();
-    if (c == '\n' || c == '\r') {
-      commandComplete = true;
-      return;
-    } else {
-      command += c;
+    if (!shown) {
+      displayCommand("Receiving...");
+      shown = true;
     }
-    // Prevent buffer overflow
-    if (command.length() > 32) {
-      command = "";
-      commandComplete = false;
+
+    char c = Serial.read();
+
+    // Only allow printable characters or newline
+    if ((c >= 32 && c <= 126) || c == '\n' || c == '\r') {
+      if (c == '\n' || c == '\r') {
+        commandComplete = true;
+        shown = false;
+        return;
+      } else {
+        command += c;
+      }
+
+      // If command is too long, reset it
+      if (command.length() > 32) {
+        command = "";
+        commandComplete = false;
+        shown = false;
+        displayCommand1("Error: Overflow");
+        delay(1000); // Allow message to be readable
+        displayCommand("BT Car Ready");
+        return;
+      }
+    } else {
+      // Ignore unprintable garbage characters
+      continue;
     }
   }
 }
 
+
 void displayCommand(String cmd) {
   display.clearDisplay();
+
   display.setTextSize(1);
   display.setCursor(0, 0);
-  display.print("CMD: ");
-  display.setTextSize(2);
+  display.println(cmd);
+  display.display();
+}
+void displayCommand1(String cmd) {
+  display.clearDisplay();
+ 
+  display.setTextSize(1);
   display.setCursor(0, 20);
   display.println(cmd);
   display.display();
 }
-
 void processCommand(String cmd) {
   if (cmd.length() < 1) return;
 
@@ -96,7 +130,7 @@ void processCommand(String cmd) {
   int value = cmd.substring(1).toInt();
 
   switch (commandType) {
-    case 'T': // Steering
+    case 'T': // Steering control
       value = constrain(value, 0, 180);
       steering.write(value);
       break;
@@ -118,10 +152,15 @@ void processCommand(String cmd) {
         case 2: // Backward
           moveBackward(DEFAULT_SPEED);
           break;
+        default:
+          displayCommand("G? Invalid");
+          break;
       }
       break;
 
-    // Add more commands as needed
+    default: // Unknown command
+      displayCommand("Invalid CMD");
+      break;
   }
 }
 
@@ -151,3 +190,4 @@ void stop() {
   analogWrite(LEFT_MOTOR_PWM, 0);
   analogWrite(RIGHT_MOTOR_PWM, 0);
 }
+
